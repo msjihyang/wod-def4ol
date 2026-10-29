@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <!-- `flutter build web --base-href /경로/` 값으로 바뀐다 -->
+  <base href="/wod-def4ol/">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="크로스핏 WOD 타이머 — FOR TIME · AMRAP · EMOM · TABATA · INTERVAL">
+  <meta name="theme-color" content="#000000">
+  <!-- 검색엔진에 올리지 않기 (주소를 아는 사람만 쓰게) -->
+  <meta name="robots" content="noindex, nofollow">
+
+  <!-- 아이폰: 홈 화면에 추가하면 주소창 없이 앱처럼 열린다 -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="히어로훈련소">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  <title>히어로훈련소</title>
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    body { margin: 0; background: #fff; }
+    /* 설치 안내 창 (앱 디자인처럼 흑백) */
+    #install {
+      position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 9999;
+      background: #000; color: #fff; border-radius: 18px; padding: 18px 18px 14px;
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      box-shadow: 0 8px 30px rgba(0,0,0,.35); display: none;
+      padding-bottom: calc(14px + env(safe-area-inset-bottom));
+    }
+    #install h3 { margin: 0 0 8px; font-size: 17px; font-weight: 800; }
+    #install ol { margin: 0 0 12px; padding-left: 20px; font-size: 15px; line-height: 1.7; }
+    #install p { margin: 0 0 12px; font-size: 15px; line-height: 1.5; }
+    #install .row { display: flex; gap: 8px; }
+    #install button, #install a.btn {
+      flex: 1; border: 0; border-radius: 12px; padding: 12px; font-size: 15px; font-weight: 800;
+      text-align: center; text-decoration: none; cursor: pointer;
+    }
+    #install .primary { background: #fff; color: #000; }
+    #install .ghost { background: #222; color: #bbb; }
+    #install .share { display: inline-block; width: 18px; height: 18px; vertical-align: -3px; }
+  </style>
+</head>
+<body>
+  <div id="install" role="dialog" aria-label="앱 설치 안내"></div>
+
+  <script>
+    // 설치 안내: 이미 앱으로 열었거나, "다음에"를 누른 지 3일이 안 됐으면 띄우지 않는다
+    (function () {
+      var box = document.getElementById('install');
+      var ua = navigator.userAgent;
+      var standalone = window.navigator.standalone === true ||
+        window.matchMedia('(display-mode: standalone)').matches;
+      if (standalone) return;
+      try {
+        var last = Number(localStorage.getItem('installDismissedAt') || 0);
+        if (Date.now() - last < 3 * 24 * 60 * 60 * 1000) return;
+      } catch (e) {}
+
+      var isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      var inApp = /KAKAOTALK|Instagram|NAVER|FBAN|FBAV|Line\//i.test(ua);
+      var shareIcon = '<svg class="share" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M5 11v9h14v-9"/></svg>';
+      var later = '<button class="ghost" id="later">다음에</button>';
+
+      function show(html) {
+        box.innerHTML = html;
+        box.style.display = 'block';
+        var btn = document.getElementById('later');
+        if (btn) btn.onclick = function () {
+          box.style.display = 'none';
+          try { localStorage.setItem('installDismissedAt', String(Date.now())); } catch (e) {}
+        };
+      }
+
+      if (inApp) {
+        // 카카오톡 등 앱 안 브라우저에서는 홈 화면 추가가 안 된다 → 바깥 브라우저로
+        var open = /KAKAOTALK/i.test(ua)
+          ? '<a class="btn primary" href="kakaotalk://web/openExternal?url=' + encodeURIComponent(location.href) + '">' + (isIOS ? 'Safari로 열기' : '크롬으로 열기') + '</a>'
+          : '';
+        show('<h3>📲 앱으로 설치하려면</h3><p>' +
+          (isIOS ? '오른쪽 아래 <b>⋯</b> → <b>Safari로 열기</b>' : '오른쪽 위 <b>⋮</b> → <b>다른 브라우저로 열기</b>') +
+          ' 후 설치할 수 있어요.</p><div class="row">' + later + open + '</div>');
+        return;
+      }
+
+      if (isIOS) {
+        show('<h3>📲 홈 화면에 앱으로 추가하기</h3><ol>' +
+          '<li>아래(아이패드는 위) 공유 버튼 ' + shareIcon + ' 누르기</li>' +
+          '<li><b>홈 화면에 추가</b> 누르기 (안 보이면 아래로 내려서)</li>' +
+          '<li>오른쪽 위 <b>추가</b></li></ol><div class="row">' + later + '</div>');
+        return;
+      }
+
+      // 안드로이드 크롬 등: 브라우저가 설치를 허락하면 진짜 설치 버튼을 띄운다
+      window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        show('<h3>📲 히어로훈련소 앱 설치</h3><p>홈 화면에 아이콘이 생기고, 앱처럼 전체 화면으로 열려요.</p>' +
+          '<div class="row">' + later + '<button class="primary" id="go">설치</button></div>');
+        document.getElementById('go').onclick = function () {
+          box.style.display = 'none';
+          e.prompt();
+        };
+      });
+    })();
+  </script>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

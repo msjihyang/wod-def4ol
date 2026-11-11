@@ -49,6 +49,10 @@
   <div id="install" role="dialog" aria-label="앱 설치 안내"></div>
 
   <script>
+    // 아이폰(Safari 17+): 타이머 소리가 음악을 멈추지 않고 겹쳐 나오게 (DOMAIN §6-4)
+    try { if (navigator.audioSession) navigator.audioSession.type = 'ambient'; } catch (e) {}
+  </script>
+  <script>
     // 설치 안내: 이미 앱으로 열었거나, "다음에"를 누른 지 3일이 안 됐으면 띄우지 않는다
     (function () {
       var box = document.getElementById('install');
